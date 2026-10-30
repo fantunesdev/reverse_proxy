@@ -68,14 +68,17 @@ Não ative essas opções no Compose de desenvolvimento, que continua usando HTT
 A pasta `/docker/myfinance` da VM corresponde ao repositório Docker do MyFinance;
 elas não representam necessariamente o mesmo nome de pasta usado no PC.
 
-Crie a rede uma única vez e suba os serviços nesta ordem, em uma janela de manutenção:
+Crie a rede uma única vez e suba os serviços nesta ordem, em uma janela de manutenção.
+A faixa `172.30.0.0/24` deve estar livre também na rede da VM e nas VPNs;
+não use `172.18.0.0/16`, reservada pelo Compose do MyFinance.
+O Redis precisa estar na mesma rede interna da aplicação para o WebSocket funcionar:
 
 ```bash
 chmod 600 /docker/reverse_proxy/certs/myfinance.key
-docker network inspect myfinance-proxy >/dev/null 2>&1 || docker network create myfinance-proxy
+docker network inspect myfinance-proxy >/dev/null 2>&1 || docker network create --subnet 172.30.0.0/24 myfinance-proxy
 cd /docker/myfinance
 docker compose config --quiet
-docker compose up --build -d app-myfin nginx-myfin
+docker compose up --build -d redis-myfin app-myfin nginx-myfin
 cd /docker/reverse_proxy
 docker compose config --quiet
 docker compose run --rm --no-deps nginx-proxy nginx -t
